@@ -9,7 +9,7 @@ import pandas as pd #for exporting data into csv
 url = 'https://ucirvinesports.com/sports/baseball/stats/2023/tulane/boxscore/11733'
 chrome_path = 'Users/katelynvuong/Downloads/chromedriver'
 
-# got this block of code from the internet to help fix an error 
+
 chrome_options = Options()
 #chrome_options.add_argument("--headless") 
 service = Service(chrome_path)
