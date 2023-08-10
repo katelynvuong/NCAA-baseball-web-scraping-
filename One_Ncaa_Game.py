@@ -1,3 +1,6 @@
+### This downloads the data of a single game from the NCAA website when given then speciic url of the game. 
+
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
