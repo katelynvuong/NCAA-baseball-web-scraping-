@@ -1,3 +1,9 @@
+### My first task was to try and download the data from a single game from the UCI website. I later realized that
+### I wanted to download all the data straight from the NCAA website so I could get everything I needed from one site rather then
+### every single teams' websites. 
+
+
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
