@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 
 def team_naming(team_list): # returns home and away team 
     unique_teams = list(OrderedDict.fromkeys(team_list))
+    unique_teams = [team.replace(" ", "") for team in unique_teams]
     home_team = unique_teams[1]
     away_team = unique_teams[0]
 
