@@ -6,9 +6,10 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 import time
 from collections import OrderedDict
-import pandas as pd #for exporting data into csv
+import pandas as pd 
+from urllib.parse import urlsplit
 
-def team_naming(team_list): #FIX: remove spaces from team names
+def team_naming(team_list): # returns home and away team 
     unique_teams = list(OrderedDict.fromkeys(team_list))
     home_team = unique_teams[1]
     away_team = unique_teams[0]
@@ -16,10 +17,12 @@ def team_naming(team_list): #FIX: remove spaces from team names
     return home_team, away_team
 
 
-def get_data(innings):
+def get_data(innings, date): #extracting and exporting data into a csv file for each game
+    url_parts = urlsplit(driver.current_url) #getting the game ID
+    game_id = url_parts.path.split('/')[-2]
     team =[]
     play =[]
-    for inning in innings:
+    for inning in innings: # extracts play by play data and appends to 'team' and 'play' lists
         rows = inning.find_elements(By.TAG_NAME, "tr")
         for row in rows:
             cells = row.find_elements(By.TAG_NAME, "td")
@@ -30,29 +33,24 @@ def get_data(innings):
                 play.append(cells[1].text)
 
     home_team, away_team = team_naming(team)
-    df = pd.DataFrame({'Team': team , 'Play' : play})
-    csv_filename = f'{home_team}_{away_team}_202306100.csv'
-    df.to_csv(csv_filename, index=False)
+    df = pd.DataFrame({'Team': team , 'Play' : play}) #creates dataframe for 'team' and 'play
+    csv_filename = f'{away_team}_{home_team}_{date}_{game_id}.csv' #FIXED: creates a {date} and {gameID}
+    df.to_csv(csv_filename, index=False) #exports dataframe into a csv file 
 
 
 
-
-url = 'https://www.ncaa.com/scoreboard/baseball/d1/2023/06/10/all-conf'
-chrome_path = 'Users/katelynvuong/Downloads/chromedriver'
-
-
+url = 'https://www.ncaa.com/scoreboard/baseball/d1/2023/06/11/all-conf'
 chrome_options = Options()
-#chrome_options.add_argument("--headless") 
-service = Service(chrome_path)
-driver = webdriver.Chrome(service=service, options=chrome_options)
-
+driver = webdriver.Chrome(options=chrome_options)
 driver.get(url)
 driver.implicitly_wait(5)
 games = driver.find_elements(By.CLASS_NAME, "gamePod-link")
 
+date_parts = url.split('/') #getting the date
+date = ''.join(date_parts[-4:-1])
 
-for i in range(len(games)):
-    games = driver.find_elements(By.CLASS_NAME, "gamePod-link")
+for i in range(len(games)): #looping through each game, clicks through all the necessary buttons to get to the play-by-play data
+    games = driver.find_elements(By.CLASS_NAME, "gamePod-link") 
     game = games[i]
     game.click()
     driver.implicitly_wait(5)
@@ -64,7 +62,7 @@ for i in range(len(games)):
     driver.implicitly_wait(5)
     table = driver.find_element(By.ID, "gamecenterAppContent")
     innings = table.find_elements(By.TAG_NAME, "tbody" )
-    get_data(innings)
+    get_data(innings, date) #where all the magic happens 
     driver.get(url) 
 
  
