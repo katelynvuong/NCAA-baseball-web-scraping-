@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 from datetime import datetime, timedelta #lets us 
 
 
+
 def team_naming(team_list): # returns home and away team 
     unique_teams = list(OrderedDict.fromkeys(team_list))
     unique_teams = [team.replace(" ", "") for team in unique_teams]
@@ -43,7 +44,7 @@ def get_data(innings, date): #extracting and exporting data into a csv file for 
 
 
 start_date = datetime(2023, 2, 17)  #first day of the season
-end_date = datetime(2023, 6, 26)   #last day of the season 
+end_date = datetime(2023, 5, 20)   #last day of the season 
 base_url = 'https://www.ncaa.com/scoreboard/baseball/d1/' #first part of url 
 chrome_options = Options()
 driver = webdriver.Chrome(options=chrome_options)
@@ -55,25 +56,38 @@ while current_date >= start_date: #while day is above first day of the season
     url = f'{base_url}{date_string}/all-conf' #creates url with correct date string
     driver.get(url) #goes to url 
     driver.implicitly_wait(5)
-    games = driver.find_elements(By.CLASS_NAME, "gamePod-link")
-    date_parts = url.split('/') #getting the date
-    date = ''.join(date_parts[-4:-1])
+    try: #use this exception to handle days with no games
+        games = driver.find_elements(By.CLASS_NAME, "gamePod-link")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
 
-    for i in range(len(games)): #looping through each game, clicks through all the necessary buttons to get to the play-by-play data
-        games = driver.find_elements(By.CLASS_NAME, "gamePod-link") 
-        game = games[i]
-        game.click()
-        driver.implicitly_wait(5)
-        tabs_container = driver.find_element(By.CLASS_NAME, 'tabs-container')
-        driver.implicitly_wait(5)
-        driver.execute_script("arguments[0].scrollIntoView();", tabs_container)
-        tabs = tabs_container.find_elements(By.TAG_NAME, 'a')[1]
-        tabs.click()
-        driver.implicitly_wait(5)
-        table = driver.find_element(By.ID, "gamecenterAppContent")
-        innings = table.find_elements(By.TAG_NAME, "tbody" )
-        get_data(innings, date) #where all the data magic happens 
+    if not games:
+        print(f"No games found for date: {current_date}")
+    else: #for days with games
+        games = driver.find_elements(By.CLASS_NAME, "gamePod-link")
+        date_parts = url.split('/') #getting the date
+        date = ''.join(date_parts[-4:-1])
+
+        for i in range(len(games)): #looping through each game, clicks through all the necessary buttons to get to the play-by-play data
+                games = driver.find_elements(By.CLASS_NAME, "gamePod-link") 
+                game = games[i]
+                game.click()
+                driver.implicitly_wait(5)
+                tabs_container = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, 'tabs-container'))
+                )
+                driver.execute_script("arguments[0].scrollIntoView();", tabs_container)
+                driver.implicitly_wait(5)
+                driver.execute_script("arguments[0].scrollIntoView();", tabs_container)
+                tabs = tabs_container.find_elements(By.TAG_NAME, 'a')[1]
+                tabs.click()
+                driver.implicitly_wait(5)
+                table = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.ID, "gamecenterAppContent"))
+                )
+                innings = table.find_elements(By.TAG_NAME, "tbody" )
+                get_data(innings, date) #where all the data magic happens 
+                driver.get(url)
+
     current_date -= timedelta(days=1) #moves to previous day
-
-    
 driver.quit()
